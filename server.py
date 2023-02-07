@@ -27,10 +27,10 @@ while True:
         # Receive the data in small chunks and retransmit it
         while True:
             data = connection.recv(1024)
-            realmes = data.decode("utf-8")
-            if realmes == 'Connect':
+            client_msg = data.decode("utf-8")
+            if client_msg == 'Connect':
                 connection.sendall(b'Welcome to the File Server!')
-            elif realmes == "LIST":
+            elif client_msg == "LIST":
                 filelist = os.listdir(path)
                 fileformat = ""
                 for i in filelist:
@@ -42,7 +42,32 @@ while True:
                 else:
                     file = fileformat.encode('utf-8')
                     connection.sendall(file)
-
+            elif client_msg == "PUSH":
+                filename = connection.recv(1024)
+                filename = filename.decode("utf-8")
+                print(filename)
+                file = open(path + "/" + filename, "w")
+                body = connection.recv(1024)
+                body = body.decode("utf-8")
+                print(data)
+                file.write(body)
+                response = "Received the file " + filename + "!"
+                response = response.encode("utf-8")
+                connection.sendall(response)
+                file.close()
+            elif client_msg == "DELETE":
+                print('here')
+                filename = connection.recv(1024)
+                filename = filename.decode("utf-8")
+                filelist = os.listdir(path)
+                print(filelist)
+                if filelist == []:
+                    connection.sendall(b'Server directory is empty!')
+                elif filename not in filelist:
+                    connection.sendall(b'File not found!')
+                else:
+                    os.remove(path + "/" + filename)
+                    connection.sendall(b'File found!')
             else:
                 print('no data from', client_address)
                 break

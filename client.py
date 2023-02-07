@@ -25,12 +25,27 @@ try:
     while True:
 
         command = input(">")
-        if command == 'LIST':
-
+        if 'LIST' in command:
             sock.sendall(b'LIST')
-        elif command == 'PUSH':
 
-            print('here')
+        elif 'PUSH' in command:
+            sock.sendall(b'PUSH')
+            filename = command.replace('PUSH', '')
+            filename = filename.replace(' ', '')
+            sock.sendall(filename.encode("utf-8"))
+
+            file = open('client_data/'+filename, "r")
+            data = file.read()
+
+            sock.sendall(data.encode("utf-8"))
+            file.close()
+
+        elif 'DELETE' in command:
+            sock.sendall(b'DELETE')
+            filename = command.replace('DELETE', '')
+            filename = filename.replace(' ', '')
+            sock.sendall(filename.encode("utf-8"))
+
         elif command == 'EXIT':
             break
 
