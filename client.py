@@ -23,7 +23,6 @@ try:
     print(data.decode("utf-8"))
 
     while True:
-
         command = input(">")
         if 'LIST' in command:
             sock.sendall(b'LIST')
@@ -46,10 +45,16 @@ try:
             filename = filename.replace(' ', '')
             sock.sendall(filename.encode("utf-8"))
 
+        elif 'OVERWRITE' in command:
+            sock.sendall(b'OVERWRITE')
+            filename = command.replace('OVERWRITE', '')
+            filename = filename.replace(' ', '')
+            sock.sendall(filename.encode("utf-8"))
+
         elif command == 'EXIT':
             sock.sendall(b'EXIT')
             break
-
+        
         data = sock.recv(1024)
         print(data.decode("utf-8"))
 
