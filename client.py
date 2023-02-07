@@ -21,7 +21,7 @@ try:
     sock.sendall(b'Connect')
     data = sock.recv(1024)
     print(data.decode("utf-8"))
-    exit = 0
+
     while True:
 
         command = input(">")
@@ -47,13 +47,13 @@ try:
             sock.sendall(filename.encode("utf-8"))
 
         elif command == 'EXIT':
+            sock.sendall(b'EXIT')
             break
 
         data = sock.recv(1024)
         print(data.decode("utf-8"))
 
 
-
 finally:
-    print('closing socket')
+    print('Disconnected from the server!')
     sock.close()
