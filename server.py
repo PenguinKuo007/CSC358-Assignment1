@@ -40,7 +40,6 @@ def handle_client(connection, address):
             connection.sendall(response)
             file.close()
         elif client_msg == "DELETE":
-            print('here')
             filename = connection.recv(1024)
             filename = filename.decode("utf-8")
             filelist = os.listdir(path)
@@ -52,11 +51,35 @@ def handle_client(connection, address):
             else:
                 os.remove(path + "/" + filename)
                 connection.sendall(b'File found!')
+
+        elif client_msg == "OVERWRITE":
+            filename = connection.recv(1024)
+            filename = filename.decode("utf-8")
+            print(filename)
+
+            filelist = os.listdir(path)
+            check = False
+            for i in filelist:
+                if i == filename:
+                    check = True
+            
+            if not check:
+                connection.sendall(b'File not found!')
+            else:
+                file = open(path + "/" + filename, "w")
+                body = "This is some hardcoded text to overwrite a file with."
+                file.write(body)
+                response = "The file " + filename + " overwritten!"
+                response = response.encode("utf-8")
+                connection.sendall(response)
+                file.close()
+
         elif client_msg == "EXIT":
             print(address, "Has gracefully exited the socket.")
             break
         else:
             print('no data from', client_address)
+            print(client_msg)
             break
 
     connection.close()
