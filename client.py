@@ -1,5 +1,21 @@
 import socket
 import sys
+import os
+
+"""
+This function will construct the protocols sent over to the server
+The protocol is a byte string with the filename, size and body of the file.
+Example construction of the protocol is as follows:
+input = ('file.txt', 6, 'this is a file')
+output = b'filename: file.txt filesize: 14 filebody: this is a file'
+Note: the filesize and filebody will only have data for the PUSH command
+"""
+def construct_protocol(name, size, body):
+
+    protocol = f'filename: {name} filesize: {size} filebody: {body}'
+
+    return protocol.encode("utf-8")
+
 
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -31,25 +47,35 @@ try:
             sock.sendall(b'PUSH')
             filename = command.replace('PUSH', '')
             filename = filename.replace(' ', '')
-            sock.sendall(filename.encode("utf-8"))
-
+            # sock.sendall(filename.encode("utf-8"))
             file = open('client_data/'+filename, "r")
-            data = file.read()
+            body = file.read()
 
-            sock.sendall(data.encode("utf-8"))
+            # Get the attributes of the file to get the filesize in bytes
+            file_stats = os.stat('client_data/'+filename)
+            # Construct the protocol using the helper function with the file info
+            segment = construct_protocol(filename, file_stats.st_size, body)
+            # Send the segment 
+            sock.sendall(segment)
             file.close()
 
         elif 'DELETE' in command:
             sock.sendall(b'DELETE')
             filename = command.replace('DELETE', '')
             filename = filename.replace(' ', '')
-            sock.sendall(filename.encode("utf-8"))
+            # Construct the protocol using the helper function 
+            segment = construct_protocol(filename, '', '')
+            # Send the segment 
+            sock.sendall(segment)
 
         elif 'OVERWRITE' in command:
             sock.sendall(b'OVERWRITE')
             filename = command.replace('OVERWRITE', '')
             filename = filename.replace(' ', '')
-            sock.sendall(filename.encode("utf-8"))
+            # Construct the protocol using the helper function
+            segment = construct_protocol(filename, '', '')
+            # Send the segment 
+            sock.sendall(segment)
 
         elif command == 'EXIT':
             sock.sendall(b'EXIT')

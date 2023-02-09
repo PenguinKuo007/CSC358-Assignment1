@@ -4,6 +4,27 @@ import sys
 import threading
 
 """
+This function will deconstruct the protocols sent over from the client
+The function will return the filename, size and body of the file from the protocol string
+Example deconstruction of the protocol is as follows:
+input = 'filename: file.txt filesize: 6 filebody: this is a file'
+output = ('file.txt', '6', 'this is a file')
+Note: the filesize and filebody will only have data for the PUSH command
+"""
+def deconstruct_protocol(p):
+
+    name_index = 10
+    size_index = p.find("filesize", 9)
+    body_index = p.find("filebody", 18) 
+
+    name_val = p[10:size_index-1]
+    size_val = p[size_index+10:body_index-1]
+    body_val = p[body_index+10:]
+
+    return (name_val, size_val, body_val)
+
+
+"""
 This function will be given to each new thread to execute.
 Will loop for new actions and appropriate send responses. 
 """
@@ -12,8 +33,10 @@ def handle_client(connection, address):
     while True:
         data = connection.recv(1024)
         client_msg = data.decode("utf-8")
+
         if client_msg == 'Connect':
             connection.sendall(b'Welcome to the File Server!')
+
         elif client_msg == "LIST":
             filelist = os.listdir(path)
             fileformat = ""
@@ -26,22 +49,25 @@ def handle_client(connection, address):
             else:
                 file = fileformat.encode('utf-8')
                 connection.sendall(file)
+
         elif client_msg == "PUSH":
-            filename = connection.recv(1024)
-            filename = filename.decode("utf-8")
-            print(filename)
+            segment = connection.recv(1024)
+            filename, size, body = deconstruct_protocol(segment.decode("utf-8"))
+            print(filename, size, body)
             file = open(path + "/" + filename, "w")
-            body = connection.recv(1024)
-            body = body.decode("utf-8")
-            print(data)
+            # body = connection.recv(1024)
+            # body = body.decode("utf-8")
+            # print(data)
             file.write(body)
             response = "Received the file " + filename + "!"
             response = response.encode("utf-8")
             connection.sendall(response)
             file.close()
+
         elif client_msg == "DELETE":
-            filename = connection.recv(1024)
-            filename = filename.decode("utf-8")
+            segment = connection.recv(1024)
+            filename, size, body = deconstruct_protocol(segment.decode("utf-8"))
+
             filelist = os.listdir(path)
             print(filelist)
             if filelist == []:
@@ -53,8 +79,9 @@ def handle_client(connection, address):
                 connection.sendall(b'File found!')
 
         elif client_msg == "OVERWRITE":
-            filename = connection.recv(1024)
-            filename = filename.decode("utf-8")
+            segment = connection.recv(1024)
+            filename, size, body = deconstruct_protocol(segment.decode("utf-8"))
+
             print(filename)
 
             filelist = os.listdir(path)
@@ -67,8 +94,8 @@ def handle_client(connection, address):
                 connection.sendall(b'File not found!')
             else:
                 file = open(path + "/" + filename, "w")
-                body = "This is some hardcoded text to overwrite a file with."
-                file.write(body)
+                overwrite_body = "This is some hardcoded text to overwrite a file with."
+                file.write(overwrite_body)
                 response = "The file " + filename + " overwritten!"
                 response = response.encode("utf-8")
                 connection.sendall(response)
