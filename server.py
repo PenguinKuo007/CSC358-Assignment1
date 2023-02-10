@@ -11,25 +11,28 @@ input = 'filename: file.txt filesize: 6 filebody: this is a file'
 output = ('file.txt', '6', 'this is a file')
 Note: the filesize and filebody will only have data for the PUSH command
 """
-def deconstruct_protocol(p):
 
+
+def deconstruct_protocol(p):
     name_index = 10
     size_index = p.find("filesize", 9)
-    body_index = p.find("filebody", 18) 
+    body_index = p.find("filebody", 18)
 
-    name_val = p[10:size_index-1]
-    size_val = p[size_index+10:body_index-1]
-    body_val = p[body_index+10:]
+    name_val = p[10:size_index - 1]
+    size_val = p[size_index + 10:]
 
-    return (name_val, size_val, body_val)
+
+    return (name_val, size_val)
 
 
 """
 This function will be given to each new thread to execute.
 Will loop for new actions and appropriate send responses. 
 """
+
+
 def handle_client(connection, address):
-# Receive the data in small chunks and retransmit it
+    # Receive the data in small chunks and retransmit it
     while True:
         data = connection.recv(1024)
         client_msg = data.decode("utf-8")
@@ -52,13 +55,21 @@ def handle_client(connection, address):
 
         elif client_msg == "PUSH":
             segment = connection.recv(1024)
-            filename, size, body = deconstruct_protocol(segment.decode("utf-8"))
-            print(filename, size, body)
-            file = open(path + "/" + filename, "w")
+            connection.sendall(b'got')
+            filename, size = deconstruct_protocol(segment.decode("utf-8"))
+            print(filename, size)
+            file = open(path + "/" + filename, "wb")
             # body = connection.recv(1024)
             # body = body.decode("utf-8")
             # print(data)
-            file.write(body)
+
+            if int(size) > 0:
+                loopcount = (int(size) // 1024)
+                data = connection.recv(1024)
+                for _ in range(loopcount):
+                    data = data + connection.recv(1024)
+
+            file.write(data)
             response = "Received the file " + filename + "!"
             response = response.encode("utf-8")
             connection.sendall(response)
@@ -66,7 +77,8 @@ def handle_client(connection, address):
 
         elif client_msg == "DELETE":
             segment = connection.recv(1024)
-            filename, size, body = deconstruct_protocol(segment.decode("utf-8"))
+
+            filename, size = deconstruct_protocol(segment.decode("utf-8"))
 
             filelist = os.listdir(path)
             print(filelist)
@@ -80,7 +92,7 @@ def handle_client(connection, address):
 
         elif client_msg == "OVERWRITE":
             segment = connection.recv(1024)
-            filename, size, body = deconstruct_protocol(segment.decode("utf-8"))
+            filename, size = deconstruct_protocol(segment.decode("utf-8"))
 
             print(filename)
 
@@ -89,7 +101,7 @@ def handle_client(connection, address):
             for i in filelist:
                 if i == filename:
                     check = True
-            
+
             if not check:
                 connection.sendall(b'File not found!')
             else:
@@ -135,5 +147,3 @@ while True:
     # Create and start a new thread for every new connection
     t = threading.Thread(target=handle_client, args=(connection, client_address))
     t.start()
-
-        

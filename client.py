@@ -10,9 +10,10 @@ input = ('file.txt', 6, 'this is a file')
 output = b'filename: file.txt filesize: 14 filebody: this is a file'
 Note: the filesize and filebody will only have data for the PUSH command
 """
-def construct_protocol(name, size, body):
 
-    protocol = f'filename: {name} filesize: {size} filebody: {body}'
+
+def construct_protocol(name, size):
+    protocol = f'filename: {name} filesize: {size}'
 
     return protocol.encode("utf-8")
 
@@ -28,12 +29,12 @@ sock.connect(server_address)
 try:
 
     # Send data
-    #message = b'This is the message.  It will be repeated.'
-    #print('sending {!r}'.format(message))
-    #sock.sendall(message)
+    # message = b'This is the message.  It will be repeated.'
+    # print('sending {!r}'.format(message))
+    # sock.sendall(message)
     # Look for the response
-    #amount_received = 0
-    #amount_expected = len(message)
+    # amount_received = 0
+    # amount_expected = len(message)
     sock.sendall(b'Connect')
     data = sock.recv(1024)
     print(data.decode("utf-8"))
@@ -48,24 +49,28 @@ try:
             filename = command.replace('PUSH', '')
             filename = filename.replace(' ', '')
             # sock.sendall(filename.encode("utf-8"))
-            file = open('client_data/'+filename, "r")
+            file = open('client_data/' + filename, "rb")
             body = file.read()
 
             # Get the attributes of the file to get the filesize in bytes
-            file_stats = os.stat('client_data/'+filename)
+            file_stats = os.stat('client_data/' + filename)
             # Construct the protocol using the helper function with the file info
-            segment = construct_protocol(filename, file_stats.st_size, body)
-            # Send the segment 
+            segment = construct_protocol(filename, file_stats.st_size)
+            # Send the segment
             sock.sendall(segment)
+            print(segment)
+            sock.recv(1024)
+            sock.sendall(body)
+            print(body)
             file.close()
 
         elif 'DELETE' in command:
             sock.sendall(b'DELETE')
             filename = command.replace('DELETE', '')
             filename = filename.replace(' ', '')
-            # Construct the protocol using the helper function 
-            segment = construct_protocol(filename, '', '')
-            # Send the segment 
+            # Construct the protocol using the helper function
+            segment = construct_protocol(filename, '')
+            # Send the segment
             sock.sendall(segment)
 
         elif 'OVERWRITE' in command:
@@ -73,14 +78,14 @@ try:
             filename = command.replace('OVERWRITE', '')
             filename = filename.replace(' ', '')
             # Construct the protocol using the helper function
-            segment = construct_protocol(filename, '', '')
-            # Send the segment 
+            segment = construct_protocol(filename, '')
+            # Send the segment
             sock.sendall(segment)
 
         elif command == 'EXIT':
             sock.sendall(b'EXIT')
             break
-        
+
         data = sock.recv(1024)
         print(data.decode("utf-8"))
 
