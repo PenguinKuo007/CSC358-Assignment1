@@ -11,6 +11,7 @@ output = b'filename: file.txt filesize: 14 filebody: this is a file'
 Note: the filesize and filebody will only have data for the PUSH command
 """
 
+
 def construct_protocol(name, size):
     protocol = f'filename: {name} filesize: {size}'
 
@@ -27,18 +28,22 @@ sock.connect(server_address)
 
 try:
 
-    sock.sendall(b'Connect')  # connect to the server side
+    # Send data
+    # message = b'This is the message.  It will be repeated.'
+    # print('sending {!r}'.format(message))
+    # sock.sendall(message)
+    # Look for the response
+    # amount_received = 0
+    # amount_expected = len(message)
+    sock.sendall(b'Connect')
     data = sock.recv(1024)
     print(data.decode("utf-8"))
 
     while True:
-        command = input(">")  # ask user to input the command
-
-        # If the command is a LIST command, then send corresponding protocol to server
+        command = input(">")
         if 'LIST' in command:
             sock.sendall(b'LIST')
 
-        # If the command is a PUSH command, then send corresponding protocol to server
         elif 'PUSH' in command:
             sock.sendall(b'PUSH')
             filename = command.replace('PUSH', '')
@@ -53,13 +58,12 @@ try:
             segment = construct_protocol(filename, file_stats.st_size)
             # Send the segment
             sock.sendall(segment)
-            # Separating the the sendall
+            print(segment)
             sock.recv(1024)
-            # Send the content of the file
             sock.sendall(body)
+            print(body)
             file.close()
 
-        # If the command is a DELETE command, then send corresponding protocol to server
         elif 'DELETE' in command:
             sock.sendall(b'DELETE')
             filename = command.replace('DELETE', '')
@@ -69,7 +73,6 @@ try:
             # Send the segment
             sock.sendall(segment)
 
-        # If the command is a OVERWRITE command, then send corresponding protocol to server
         elif 'OVERWRITE' in command:
             sock.sendall(b'OVERWRITE')
             filename = command.replace('OVERWRITE', '')
@@ -79,12 +82,10 @@ try:
             # Send the segment
             sock.sendall(segment)
 
-        # If the command is a EXIT command, then disconnect from the server
         elif command == 'EXIT':
             sock.sendall(b'EXIT')
             break
 
-        # Receive the response from the server
         data = sock.recv(1024)
         print(data.decode("utf-8"))
 

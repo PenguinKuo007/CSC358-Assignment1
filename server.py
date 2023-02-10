@@ -21,6 +21,7 @@ def deconstruct_protocol(p):
     name_val = p[10:size_index - 1]
     size_val = p[size_index + 10:]
 
+
     return (name_val, size_val)
 
 
@@ -54,12 +55,14 @@ def handle_client(connection, address):
 
         elif client_msg == "PUSH":
             segment = connection.recv(1024)
-            # For separating the two sendall from client side
             connection.sendall(b'got')
             filename, size = deconstruct_protocol(segment.decode("utf-8"))
+            print(filename, size)
             file = open(path + "/" + filename, "wb")
+            # body = connection.recv(1024)
+            # body = body.decode("utf-8")
+            # print(data)
 
-            #  Use loop to get receive all content of a file if the size is over 1024 bytes
             if int(size) > 0:
                 loopcount = (int(size) // 1024)
                 data = connection.recv(1024)
@@ -109,6 +112,10 @@ def handle_client(connection, address):
                 response = response.encode("utf-8")
                 connection.sendall(response)
                 file.close()
+
+        elif client_msg == "EXIT":
+            print(address, "Has gracefully exited the socket.")
+            break
         else:
             print('no data from', client_address)
             print(client_msg)
