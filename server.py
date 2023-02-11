@@ -48,6 +48,7 @@ def handle_client(connection, address):
             if fileformat == '':
                 connection.sendall(b'Server directory is empty!')
             else:
+                fileformat= fileformat[:len(fileformat)-1]
                 file = fileformat.encode('utf-8')
                 connection.sendall(file)
 
