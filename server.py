@@ -44,7 +44,6 @@ def handle_client(connection, address):
             fileformat = ""
             for i in filelist:
                 fileformat = fileformat + i + "\n"
-            print(fileformat)
 
             if fileformat == '':
                 connection.sendall(b'Server directory is empty!')
@@ -55,13 +54,14 @@ def handle_client(connection, address):
         elif client_msg == "PUSH":
             segment = connection.recv(1024)
             # For separating the two sendall from client side
-            connection.sendall(b'got')
             filename, size = deconstruct_protocol(segment.decode("utf-8"))
             file = open(path + "/" + filename, "wb")
+            connection.sendall(b'got')
+
 
             #  Use loop to get receive all content of a file if the size is over 1024 bytes
             if int(size) > 0:
-                loopcount = (int(size) // 1024)
+                loopcount = (int(size) // 1024) + 1
                 data = connection.recv(1024)
                 for _ in range(loopcount):
                     data = data + connection.recv(1024)
@@ -70,6 +70,7 @@ def handle_client(connection, address):
             response = "Received the file " + filename + "!"
             response = response.encode("utf-8")
             connection.sendall(response)
+
             file.close()
 
         elif client_msg == "DELETE":
@@ -78,7 +79,7 @@ def handle_client(connection, address):
             filename, size = deconstruct_protocol(segment.decode("utf-8"))
 
             filelist = os.listdir(path)
-            print(filelist)
+
             if filelist == []:
                 connection.sendall(b'Server directory is empty!')
             elif filename not in filelist:
@@ -91,7 +92,6 @@ def handle_client(connection, address):
             segment = connection.recv(1024)
             filename, size = deconstruct_protocol(segment.decode("utf-8"))
 
-            print(filename)
 
             filelist = os.listdir(path)
             check = False
@@ -121,13 +121,13 @@ def handle_client(connection, address):
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Bind the socket to the port
-server_address = ('localhost', 10001)
+server_address = ('142.1.46.51', 10001)
 print('[STARTING] Server is starting...')
 sock.bind(server_address)
 
 # Listen for incoming connections
 sock.listen()
-absolute_path = os.path.dirname(__file__)
+absolute_path = os.path.dirname(os.path.abspath(__file__))
 print(absolute_path)
 relative_path = "/server_data"
 path = absolute_path + relative_path

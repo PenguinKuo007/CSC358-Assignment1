@@ -11,6 +11,7 @@ output = b'filename: file.txt filesize: 14 filebody: this is a file'
 Note: the filesize and filebody will only have data for the PUSH command
 """
 
+
 def construct_protocol(name, size):
     protocol = f'filename: {name} filesize: {size}'
 
@@ -21,8 +22,7 @@ def construct_protocol(name, size):
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Connect the socket to the port where the server is listening
-server_address = ('localhost', 10001)
-print('connecting to {} port {}'.format(*server_address))
+server_address = ('142.1.46.51', 10001)
 sock.connect(server_address)
 
 try:
@@ -32,6 +32,7 @@ try:
     print(data.decode("utf-8"))
 
     while True:
+
         command = input(">")  # ask user to input the command
 
         # If the command is a LIST command, then send corresponding protocol to server
@@ -46,11 +47,12 @@ try:
             # sock.sendall(filename.encode("utf-8"))
             file = open('client_data/' + filename, "rb")
             body = file.read()
+            size = body.__sizeof__()
 
             # Get the attributes of the file to get the filesize in bytes
             file_stats = os.stat('client_data/' + filename)
             # Construct the protocol using the helper function with the file info
-            segment = construct_protocol(filename, file_stats.st_size)
+            segment = construct_protocol(filename, size)
             # Send the segment
             sock.sendall(segment)
             # Separating the the sendall
