@@ -100,7 +100,8 @@ def handle_client(connection, address):
                 connection.sendall(b'File not found!')
             else:
                 os.remove(path + "/" + filename)
-                connection.sendall(b'File found!')
+                msg = 'The file ' + filename + ' deleted!'
+                connection.sendall(msg.encode("utf-8"))
 
         # If the command is OVERWRITE, find if the file exists and overwrite it accordingly
         elif client_msg == "OVERWRITE":
